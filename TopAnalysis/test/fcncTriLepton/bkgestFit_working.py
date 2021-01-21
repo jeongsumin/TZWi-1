@@ -63,7 +63,8 @@ def getRErr2(AR, BR, CR, AE, BE, CE):
 
 name = "bkgEst"
 result = "fitresult_%s.txt" % name
-baseDir = "./hist_bkgest"
+#baseDir = "./hist_bkgest"
+baseDir = "./hist_tightLepVetoJet"
 chlist = ["ElElEl", "MuElEl", "ElMuMu", "MuMuMu"]
 #chlist = ["MuMuMu"]
 mclist = ["WZ", "ZZ", "DYJets"]
@@ -75,18 +76,25 @@ for i, ch in enumerate(chlist):
     rootFile = "%s/%s.root" % (baseDir, ch)
     f = TFile.Open(rootFile)
 
-    # Book hists for WZCR, TTCR
+    # Book hists for WZCR, TTCR, STCR
     hWZ = f.Get("WZCR/hW_MT/WZ")
     hZZ = f.Get("WZCR/hW_MT/ZZ")
     hDYJets = f.Get("WZCR/hW_MT/DYJets")
     hrd = f.Get("WZCR/hW_MT/Data")
-    hTT_all = f.Get("TTCR_allZ/hZ_mass/ttJets")
-    hTTrd = f.Get("TTCR/hZ_mass/Data")
+    #hTT_all = f.Get("TTCR_allZ/hZ_mass/ttJets")
+    hTTrd = f.Get("TTCR/hZ_mass/Data") # For fitting (allZ)
     hTTtt = f.Get("TTCR/hZ_mass/ttJets")
     hTTDY = f.Get("TTCR/hZ_mass/DYJets")
     hTTWZ = f.Get("TTCR/hZ_mass/WZ")
     hTTTV = f.Get("TTCR/hZ_mass/ttV")
     hTTSR = f.Get("TTSR/hZ_mass/ttJets")
+
+    hSTrd = f.Get("STCR/hZ_mass/Data") # For fitting (allZ)
+    hSTtt = f.Get("STCR/hZ_mass/ttJets")
+    hSTDY = f.Get("STCR/hZ_mass/DYJets")
+    hSTWZ = f.Get("STCR/hZ_mass/WZ")
+    hSTTV = f.Get("STCR/hZ_mass/ttV")
+    hSTSR = f.Get("STSR/hZ_mass/ttJets")
 
     hlist = [hWZ, hZZ, hDYJets]
 
@@ -131,7 +139,45 @@ for i, ch in enumerate(chlist):
     model = RooAddPdf("model", "model", RooArgList(ZZpdf, DYpdf, WZpdf), RooArgList(fZZ, fDY)) # WZ fix 
 
     #model.fitTo(data) # Without gaussian constraint
-    model.fitTo(data, RooFit.ExternalConstraints(RooArgSet(fZZ_cnt, fDY_cnt))) # With gaussian constraint
+    model.fitTo(data, RooFit.ExternalConstraints(RooArgSet(fZZ_cnt, fDY_cnt)), RooFit.Save()) # With gaussian constraint
+
+    ### Draw NLL (Contour)
+    nllcanv = TCanvas("nllcanv", "nllcanv", 1)
+    nll = model.createNLL(data)
+    m = RooMinuit(nll)
+    frameNLLcontour = m.contour(fZZ, fDY, 1, 2, 3)
+    frameNLLcontour.GetXaxis().SetTitle("fZZ (ZZ/total)")
+    frameNLLcontour.GetYaxis().SetTitle("fDY (DY/total)")
+    frameNLLcontour.SetMarkerStyle(21)
+    frameNLLcontour.Draw()
+    nllcanv.SaveAs("NLLcontour_%s.png"%ch)
+
+    ### Draw NLL
+    ZZnllcanv = TCanvas("ZZnllcanv", "ZZnllcanv", 1)
+    ZZnll = model.createNLL(data)
+    ZZnllframe = fZZ.frame()
+    ZZnll.plotOn(ZZnllframe, RooFit.ShiftToZero())
+    ZZnllframe.SetMaximum(4.);ZZnllframe.SetMinimum(0)
+    ZZnllframe.GetXaxis().SetTitle("fZZ (ZZ/total)")
+    ZZnllframe.SetTitle("NLL of fZZ")
+    ZZnllframe.Draw()
+    line1 = TLine(ZZnllframe.GetXaxis().GetXmin(), 0.5, ZZnllframe.GetXaxis().GetXmax(), 0.5)
+    line1.SetLineColor(kRed)
+    line1.Draw()
+    ZZnllcanv.SaveAs("fZZ_NLL_%s.png"%ch)
+
+    DYnllcanv = TCanvas("DYnllcanv", "DYnllcanv", 1)
+    DYnll = model.createNLL(data)
+    DYnllframe = fDY.frame()
+    DYnll.plotOn(DYnllframe, RooFit.ShiftToZero())
+    DYnllframe.SetMaximum(4.);DYnllframe.SetMinimum(0)
+    DYnllframe.GetXaxis().SetTitle("fDY (DY/total)")
+    DYnllframe.SetTitle("NLL of fDY")
+    DYnllframe.Draw()
+    line1 = TLine(DYnllframe.GetXaxis().GetXmin(), 0.5, DYnllframe.GetXaxis().GetXmax(), 0.5)
+    line1.SetLineColor(kRed)
+    line1.Draw()
+    DYnllcanv.SaveAs("fDY_NLL_%s.png"%ch)
 
     ## Central value
     # WZ fix
@@ -162,6 +208,10 @@ for i, ch in enumerate(chlist):
     estedlist = []
     ratio0berr = []
     ratio23jerr = []
+    ratio0b_st = []
+    ratio1j_st = []
+    ratio0berr_st = []
+    ratio1jerr_st = []
     ### For temporal calculation ## Should be changed!!
     nrd = hrd.Integral()
     ###
@@ -220,23 +270,27 @@ for i, ch in enumerate(chlist):
     #Tmodel = RooAddPdf("Tmodel", "Tmodel", RooArgList(TTttpdf, TTDYpdf, TTTVpdf), RooArgList(fTTtt, fTTDY)) # TTjets+DY+TTV
 
     #Tmodel.fitTo(TTdata) # Without gaussian constraint
-    Tmodel.fitTo(TTdata, RooFit.ExternalConstraints(RooArgSet(fTTtt_cnt, fTTDY_cnt, fTTWZ_cnt)))
+    Tmodel.fitTo(TTdata, RooFit.ExternalConstraints(RooArgSet(fTTtt_cnt, fTTDY_cnt, fTTWZ_cnt)), RooFit.Save())
+
+    # Draw NLL for fTTtt(tt+jet)
+    Tnllcanv = TCanvas("Tnllcanv", "Tnllcanv", 1)
+    Tnll = Tmodel.createNLL(TTdata)
+    Tnllframe = fTTtt.frame()
+    Tnll.plotOn(Tnllframe, RooFit.ShiftToZero())
+    Tnllframe.SetMaximum(4.);Tnllframe.SetMinimum(0)
+    Tnllframe.GetXaxis().SetTitle("fTTtt (Ttjets/total)")
+    Tnllframe.SetTitle("NLL of fTTtt")
+    Tnllframe.Draw()
+    line1 = TLine(Tnllframe.GetXaxis().GetXmin(), 0.5, Tnllframe.GetXaxis().GetXmax(), 0.5)
+    line1.SetLineColor(kRed)
+    line1.Draw()
+    Tnllcanv.SaveAs("TTjets_NLL_%s.png" % ch)
 
     ## Central value
     fracTTtt = fTTtt.getVal()
-    #fracTTDY = fTTDY.getVal()
-    #fracTTWZ = fTTWZ.getVal()
-    #fracTTTV = 1-fracTTtt-fracTTDY-fracTTWZ
-
-    #fracTTlist = [fracTTtt, fracTTDY, fracTTWZ, fracTTTV]
 
     ## Error
     errTTtt = fTTtt.getError()
-    #errTTDY = fTTDY.getError()
-    #errTTWZ = fTTWZ.getError()
-    #errTTTV = math.sqrt(errTTtt**2+errTTDY**2+errTTWZ**2)
-
-    #errTTlist = [errTTtt, errTTDY, errTTWZ, errTTTV]
 
     TTcplot = TCanvas("TTcplot", "TTcplot", 1)
     yframe = y.frame()
@@ -246,26 +300,137 @@ for i, ch in enumerate(chlist):
     TTcplot.SaveAs("fitresult_TTCR_%s.png"%ch)
 
     TTdataerr = calcError(hTTrd, hTTrd.FindBin(30), hTTrd.FindBin(150))
-    TTerr = getRErr(fracTTtt, totTTData, errTTtt, TTdataerr, 0)
-    nttsr = hTTSR.Integral()
+    TTerr = getRErr(fracTTtt, totTTData, errTTtt, TTdataerr, 0) # N_CR err from fitting
+    nttsr = hTTSR.Integral() # N_SR
+    nttsrerr = calcError(hTTSR, hTTSR.FindBin(30), hTTSR.FindBin(150)) # N_SR_err
+    nttcr = hTTtt.Integral() # N_CR
+    nttcrerr = calcError(hTTtt, hTTtt.FindBin(30), hTTtt.FindBin(150)) # N_CR_err
+    TTratio = nttsr/nttcr # N_SR/N_CR
+    TTratioerr = getRErr(nttsr, nttcr, nttsrerr, nttcrerr, 1) # N_SR/N_CR err
+
+    estedNSR = TTratio*totTTData*fracTTtt
+    estedNSRerr = getRErr(TTratio, totTTData*fracTTtt, TTratioerr, TTerr, 0)
 
     file = open(result, "a")
-    wline = "%s TT %f %f %f\n" %(ch, totTTData*fracTTtt*15/80, TTerr*15/80, 35900*nttsr)
+    wline0 = "ch TT estimated estimated_err expected expected_err\n"
+    wline = "%s TT %f %f %f %f\n" %(ch, estedNSR, estedNSRerr, 35900*nttsr, 35900*nttsrerr)
+    file.write(wline0)
     file.write(wline)
     file.close()
 
-### To extract expected entries
+  ### For STCR
+
+    hSTlist = [hSTtt, hSTDY, hSTWZ, hSTTV]
+
+    hSTnlist = []
+    for i,h in enumerate(hSTlist):
+        hSTnlist.append(h.Integral())
+
+    nSTtt = hSTnlist[0]
+    nSTDY = hSTnlist[1]
+    nSTWZ = hSTnlist[2]
+    nSTTV = hSTnlist[3]
+
+    totSTMC = nSTtt+nSTDY+nSTTV
+    totSTData = hSTrd.Integral()
+    rSTtt = 35900*nSTtt/totSTData
+    rSTDY = 35900*nSTDY/totSTData
+    rSTWZ = 35900*nSTWZ/totSTData
+    rSTTV = 35900*nSTTV/totSTData
+
+    ## For Gaussian constraint
+    STgcent = [rSTtt, rSTDY, rSTWZ, rSTTV] # Initial ratio before fitting
+    #STgerr = [0.25, 0.1, 0.05, 0.05] # Gaussian width for constraint fit parameter
+    STgerr = [rSTtt/2, rSTDY/2, rSTWZ/2, rSTTV/2] # Gaussian width for constraint fit parameter : for test
+
+    y = RooRealVar("y", "y", 30, 150)
+
+    fSTtt = RooRealVar("fSTtt", "fSTtt", rSTtt, 0.0, 0.9)
+    fSTDY = RooRealVar("fSTDY", "fSTDY", rSTDY, 0.0, 0.9)
+    fSTWZ = RooRealVar("fSTWZ", "fSTWZ", rSTWZ, 0.0, 0.9)
+    fSTTV = RooRealVar("fSTTV", "fSTTV", rSTTV, 0.0, 0.9)
+
+    fSTtt_cnt = RooGaussian("fSTtt_cnt", "fSTtt_cnt", fSTtt, RooFit.RooConst(rSTtt), RooFit.RooConst(STgerr[0]))
+    fSTDY_cnt = RooGaussian("fSTDY_cnt", "fSTDY_cnt", fSTDY, RooFit.RooConst(rSTDY), RooFit.RooConst(STgerr[1]))
+    fSTWZ_cnt = RooGaussian("fSTWZ_cnt", "fSTWZ_cnt", fSTWZ, RooFit.RooConst(rSTWZ), RooFit.RooConst(STgerr[2]))
+    fSTTV_cnt = RooGaussian("fSTTV_cnt", "fSTTV_cnt", fSTTV, RooFit.RooConst(rSTTV), RooFit.RooConst(STgerr[3]))
+
+    yArg = RooArgList(y)
+    STdata = RooDataHist("STdata", "data point with y", yArg, hSTrd)
+    STtt = RooDataHist("STtt", "tt point with y", yArg, hSTtt)
+    STDY = RooDataHist("STDY", "DY point with y", yArg, hSTDY)
+    STWZ = RooDataHist("STWZ", "WZ point with y", yArg, hSTWZ)
+    STTV = RooDataHist("STTV", "TTV point with y", yArg, hSTTV)
+    STttpdf = RooHistPdf("STttpdf", "STttpdf", RooArgSet(RooArgList(y)), STtt)
+    STDYpdf = RooHistPdf("STDYpdf", "STDYpdf", RooArgSet(RooArgList(y)), STDY)
+    STWZpdf = RooHistPdf("STWZpdf", "STWZpdf", RooArgSet(RooArgList(y)), STWZ)
+    STTVpdf = RooHistPdf("STTVpdf", "STTVpdf", RooArgSet(RooArgList(y)), STTV)
+
+    STmodel = RooAddPdf("STmodel", "STmodel", RooArgList(STttpdf, STDYpdf, STWZpdf, STTVpdf), RooArgList(fSTtt, fSTDY, fSTWZ)) # TTjets+DY+TTV+WZ
+    #STmodel = RooAddPdf("STmodel", "STmodel", RooArgList(STttpdf, STDYpdf, STWZpdf), RooArgList(fSTtt, fSTDY)) # TTjets+DY+WZ
+    #STmodel = RooAddPdf("STmodel", "STmodel", RooArgList(STttpdf, STDYpdf, STTVpdf), RooArgList(fSTtt, fSTDY)) # TTjets+DY+TTV
+
+    #STmodel.fitTo(STdata) # Without gaussian constraint
+    STmodel.fitTo(STdata, RooFit.ExternalConstraints(RooArgSet(fSTtt_cnt, fSTDY_cnt, fSTWZ_cnt)), RooFit.Save())
+
+    # Draw NLL for fSTtt(tt+jet)
+    STnllcanv = TCanvas("STnllcanv", "STnllcanv", 1)
+    STnll = STmodel.createNLL(STdata)
+    STnllframe = fSTtt.frame()
+    STnll.plotOn(STnllframe, RooFit.ShiftToZero())
+    STnllframe.SetMaximum(4.);STnllframe.SetMinimum(0)
+    STnllframe.GetXaxis().SetTitle("fSTtt (Ttjets/total)")
+    STnllframe.SetTitle("NLL of fSTtt")
+    STnllframe.Draw()
+    line2 = TLine(STnllframe.GetXaxis().GetXmin(), 0.5, STnllframe.GetXaxis().GetXmax(), 0.5)
+    line2.SetLineColor(kRed)
+    line2.Draw()
+    STnllcanv.SaveAs("ST_TTjets_NLL_%s.png" % ch)
+
+    ## Central value
+    fracSTtt = fSTtt.getVal()
+
+    ## Error
+    errSTtt = fSTtt.getError()
+
+    STcplot = TCanvas("STcplot", "STcplot", 1)
+    yframe2 = y.frame()
+    STdata.plotOn(yframe2)
+    STmodel.plotOn(yframe2)
+    yframe2.Draw()
+    STcplot.SaveAs("fitresult_STCR_%s.png"%ch)
+
+    STdataerr = calcError(hSTrd, hSTrd.FindBin(30), hSTrd.FindBin(150))
+    STerr = getRErr(fracSTtt, totSTData, errSTtt, STdataerr, 0) # N_CR err from fitting
+    nstsr = hSTSR.Integral() # N_SR
+    nstsrerr = calcError(hSTSR, hSTSR.FindBin(30), hSTSR.FindBin(150)) # N_SR_err
+    nstcr = hSTtt.Integral() # N_CR
+    nstcrerr = calcError(hSTtt, hSTtt.FindBin(30), hSTtt.FindBin(150)) # N_CR_err
+    STratio = nstsr/nstcr # N_SR/N_CR
+    STratioerr = getRErr(nstsr, nstcr, nstsrerr, nstcrerr, 1) # N_SR/N_CR err
+
+    estedNSR_st = STratio*totSTData*fracSTtt
+    estedNSRerr_st = getRErr(STratio, totSTData*fracSTtt, STratioerr, STerr, 0)
+
+    file = open(result, "a")
+    wline = "%s ST %f %f %f %f\n" %(ch, estedNSR_st, estedNSRerr_st, 35900*nstsr, 35900*nstsrerr)
+    file.write(wline)
+    file.close()
+
+### To extract expected entries (TTSR)
     hexpWZ = f.Get("TTSR/hW_MT/WZ")
     hexpZZ = f.Get("TTSR/hW_MT/ZZ")
     hexpDY = f.Get("TTSR/hW_MT/DYJets")
     hexplist = [hexpWZ, hexpZZ, hexpDY]
 
     nexplist = []
+    nexp_errlist = []
     for i,h in enumerate(hexplist):
         nexplist.append(h.Integral())
+        nexp_errlist.append(calcError(h, h.FindBin(0), h.FindBin(300)))
     
     for i, mc in enumerate(mclist):
-        hista = f.Get("WZCR_0b/hnGoodJet/%s" % mc)    
+        hista = f.Get("WZCR_0b/hnGoodJet/%s" % mc)
         histb = f.Get("WZCR_23jet/hnBjet/%s" % mc)
         n23j0b = hista.Integral(3,4)
         n23j0berr = calcError(hista, 3, 5)
@@ -284,7 +449,47 @@ for i, ch in enumerate(chlist):
         errWZCR = estedWZCR * getRErr2(fraclist[i], ratio0b[i], ratio23j[i], errlist[i], ratio0berr[i], ratio23jerr[i])
         ###
         file = open(result, "a")
-        wline = "%s %s %f %f %f %f %f %f %f %f %f %f\n" %(ch, mc, hnlist[i]*35900, 35900*totMC*fraclist[i], 35900*totMC*errlist[i], ratio0b[i], ratio0berr[i], ratio23j[i], ratio23jerr[i], estedWZCR, errWZCR, nexplist[i]*35900)
+        wline0 = "TT ch mc N_CR frac frac_err R_0b R_0b_err R_23j R_23j_err estedWZCR estedWZCRerr expectedTTSR expectedTTSRerr\n"
+        wline = "TT %s %s %f %f %f %f %f %f %f %f %f %f %f\n" %(ch, mc, hnlist[i]*35900, 35900*totMC*fraclist[i], 35900*totMC*errlist[i], ratio0b[i], ratio0berr[i], ratio23j[i], ratio23jerr[i], estedWZCR, errWZCR, nexplist[i]*35900, nexp_errlist[i]*35900)
+        file.write(wline0)
+        file.write(wline)
+        file.close()
+
+### To extract expected entries (STSR)
+    hexpWZ_ST = f.Get("STSR/hW_MT/WZ")
+    hexpZZ_ST = f.Get("STSR/hW_MT/ZZ")
+    hexpDY_ST = f.Get("STSR/hW_MT/DYJets")
+    hexplist_ST = [hexpWZ_ST, hexpZZ_ST, hexpDY_ST]
+
+    nexplist_ST = []
+    nexp_errlist_ST = []
+    for i, h in enumerate(hexplist_ST):
+        nexplist_ST.append(h.Integral())
+        nexp_errlist_ST.append(calcError(h, h.FindBin(0), h.FindBin(300)))
+
+    for i, mc in enumerate(mclist):
+        hista = f.Get("WZCR_0b/hnGoodJet/%s" % mc)
+        histb = f.Get("WZCR_1jet/hnBjet/%s" % mc)
+        nonly1j0b = hista.GetBinContent(2)
+        nonly1j0berr = calcError(hista, 2, 3)
+        n1j0b = hista.Integral()
+        n1j0berr = calcError(hista, 1, 5)
+        ratio0b_st.append(nonly1j0b/n1j0b)
+        ratio0berr_st.append(getRErr(nonly1j0b, n1j0b, nonly1j0berr, n1j0berr, 1))
+        n1b1j = histb.Integral(2,2)
+        n1b1jerr = calcError(histb, 2, 3)
+        n0b1j = histb.Integral(1,1)
+        n0b1jerr = calcError(histb, 1, 2)
+        ratio1j_st.append(n1b1j/n0b1j)
+        ratio1jerr_st.append(getRErr(n1b1j, n0b1j, n1b1jerr, n0b1jerr, 1))
+        ### Should be changed!!! ###
+        estedWZCR = 35900 * totMC * fraclist[i] * ratio0b_st[i] * ratio1j_st[i]
+        errWZCR = estedWZCR * getRErr2(fraclist[i], ratio0b_st[i], ratio1j_st[i], errlist[i], ratio0berr_st[i], ratio1jerr_st[i])
+        ###
+        file = open(result, "a")
+        wline0 = "ST ch mc N_CR frac frac_err R_0b R_0b_err R_1j R_1j_err estedWZCR estedWZCRerr expectedSTSR expectedSTSRerr\n"
+        wline = "ST %s %s %f %f %f %f %f %f %f %f %f %f %f\n" %(ch, mc, hnlist[i]*35900, 35900*totMC*fraclist[i], 35900*totMC*errlist[i], ratio0b_st[i], ratio0berr_st[i], ratio1j_st[i], ratio1jerr_st[i], estedWZCR, errWZCR, nexplist_ST[i]*35900, nexp_errlist_ST[i]*35900)
+        file.write(wline0)
         file.write(wline)
         file.close()
 
