@@ -1,6 +1,7 @@
 #!/bin/bash
 
-channel=( "TTZct TTZut STZct STZut" )
+#channel=( "TTZct TTZut STZct STZut" )
+channel=( "TTZct STZct" )
 mode=( "ElElEl MuElEl ElMuMu MuMuMu" )
 
 for ch in ${channel[@]}; do

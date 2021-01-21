@@ -53,8 +53,8 @@ DEFAULT_OUTFNAME = "TMVA.root"
 DEFAULT_INFNAME  = "tmva_class_example.root"
 DEFAULT_TREESIG  = "TreeS"
 DEFAULT_TREEBKG  = "TreeB"
-#DEFAULT_METHODS  = "Likelihood,LikelihoodD,MLPBNN,BDT,BDTG"
-DEFAULT_METHODS = "BDT,BDTG,BDT850,BDT200,BDT100,BDT50,BDTG200,BDTG225,BDTGt1,BDTG_TT"
+#DEFAULT_METHODS = "BDT,BDTG,BDT850,BDT200,BDT100,BDT50,BDTG_ST,BDTG225,BDTGt1,BDTG_TT,BDTGt2"
+DEFAULT_METHODS = "BDTG,BDTG_ST,BDTG225,BDTGt1,BDTG_TT,BDTGt2"
 #DEFAULT_METHODS = "BDTG_TT"
 DEFAULT_WEIGHTDIR = "dataset"
 DEFAULT_MODE = ["ElElEl", "MuElEl", "MuMuMu", "ElMuMu"]
@@ -166,8 +166,8 @@ def main():
     # All TMVA output can be suppressed by removing the "!" (not) in 
     # front of the "Silent" argument in the option string
     factory = TMVA.Factory( "TMVAClassification", outputFile, 
-                            #"!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" )
-                            "!V:!Silent:Color:DrawProgressBar:AnalysisType=Classification" )
+                            "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" )
+                            #"!V:!Silent:Color:DrawProgressBar:Transformations=I:AnalysisType=Classification" )
 
     # Set verbosity
     factory.SetVerbose( verbose )
@@ -192,22 +192,48 @@ def main():
     #  "MVAinput_ZL2bJ_dPhi", "MVAinput_ZL2bJ_dR", "MVAinput_ZL2qJ_dPhi", "MVAinput_ZL2qJ_dR",
     #  "Z_mass", "W_MT", 
     #]
-    dataloader.AddVariable( "Z_mass","Z mass","", 'F' )
-    dataloader.AddVariable( "W_MT", "Transeverse mass of W", "", "F" )
-    dataloader.AddVariable( "MVAinput_bJ_DeepJetB", "DeepJetBtagger of FCNC jet", "", "F" )
-    dataloader.AddVariable( "MVAinput_qJ_DeepJetB", "DeepJetBtagger of SM jet", "", "F" )
-    dataloader.AddVariable( "MVAinput_WLqJ_dPhi", "dPhi of WL/FCNC jet", "", "F" )
-    dataloader.AddVariable( "TriLepton_WleptonZdPhi", "dPhi of Z/WL", "", "F" )
-    dataloader.AddVariable( "MVAinput_ZL1qJ_dR", "dR of ZL1/FCNC jet", "", "F" )
-    dataloader.AddVariable( "MVAinput_ZL1bJ_dR", "dR of ZL1/SM jet", "", "F" )
-    dataloader.AddVariable( "KinTopZq_mass", "FCNC Top mass", "", "F" )
+    if "TTZct" in channel or "TTZut" in channel:
+        dataloader.AddVariable( "Z_mass","Z mass","", 'F' )#31
+        # add more variables for test
+        #dataloader.AddVariable("TriLepton_mass", "total invariant mass of the leptons", "", 'F')#44,New
+        #dataloader.AddVariable("TriLepton_WleptonZdPhi", "dPhi of Z/WL", "", 'F')#46,New
+        #dataloader.AddVariable("TriLepton_WleptonZdR", "dR of Z/WL", "", 'F')#47,New
+        #dataloader.AddVariable("nBjet", "number of b jets", "", 'F')#61,New
 
-    dataloader.AddVariable( "KinTopZq_eta", "eta of FCNC top", "", "F" )
-    dataloader.AddVariable( "MVAinput_ZL1qJ_dPhi", "dPhi of lepton from Z and FCNC jet", "", "F" )
-    dataloader.AddVariable( "MVAinput_WLqJ_dR", "dR of lepton from W and FCNC jet", "", "F" )
-    dataloader.AddVariable( "MVAinput_bJqJ_dPhi", "dPhi of FCNC jet and SM jet","", "F" )
-    dataloader.AddVariable( "TopTop_dPhi := abs(KinTopWb_phi-KinTopZq_phi)", "dPhi of SM top and FCNC top", "", "F" )
-    dataloader.AddVariable( "MVAinput_WLZL1_dPhi", "dPhi of lepton from W and lepton from Z", "", "F" )
+        dataloader.AddVariable( "W_MT", "Transeverse mass of W", "", "F" )#62
+        # add more variables for test
+        #dataloader.AddVariable("KinTopWb_eta", "pseudo rapidity of the SM top", "", 'F')#65,New
+
+        dataloader.AddVariable( "KinTopWb_mass", "SM Top mass", "", "F" )#67
+        dataloader.AddVariable( "KinTopZq_mass", "FCNC Top mass", "", "F" )#71
+
+        dataloader.AddVariable( "MVAinput_bJ_DeepJetB", "DeepJetBtagger of SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_qJ_DeepJetB", "DeepJetBtagger of FCNC jet", "", "F" )
+        dataloader.AddVariable( "MVAinput_bJ_pt", "Transverse momentum of SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_bJqJ_dR", "dR of SM bjet and FCNC jet","", "F" )
+        dataloader.AddVariable( "MVAinput_WLbJ_dPhi", "dPhi of WL/SM bjet", "", "F" )#94
+        # add more variables for test
+        #dataloader.AddVariable("MVAinput_WLbJ_dR", "dR of WL/SM bjet", "", 'F')#95,New
+
+        dataloader.AddVariable( "MVAinput_WLqJ_dR", "dR of lepton from W and FCNC jet", "", "F" )
+        dataloader.AddVariable( "MVAinput_ZL1bJ_dR", "dR of ZL1/SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_ZL1qJ_dR", "dR of ZL1/FCNC jet", "", "F" )
+        # add more variables for test
+
+    elif "STZct" in channel or "STZut" in channel:
+        dataloader.AddVariable( "Z_mass","Z mass","", 'F' )
+        dataloader.AddVariable( "TriLepton_WleptonZdPhi", "dPhi of Z/WL", "", "F" )
+        dataloader.AddVariable( "TriLepton_WleptonZdR", "dR of Z/WL", "", "F" )
+        dataloader.AddVariable( "W_MT", "Transeverse mass of W", "", "F" )
+        dataloader.AddVariable( "KinTopWb_pt", "Transverse momentum of SM top", "", "F" )
+        dataloader.AddVariable( "KinTopWb_phi", "phi of SM top", "", "F" )
+
+        dataloader.AddVariable( "MVAinput_WLZL1_dPhi", "dPhi of lepton from W and lepton from Z", "", "F" )
+        dataloader.AddVariable( "MVAinput_WLZL1_dR", "dR of lepton from W and lepton from Z", "", "F" )
+        dataloader.AddVariable( "MVAinput_bJ_DeepJetB", "DeepJetBtagger of SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_WLbJ_dPhi", "dPhi of WL/SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_WLbJ_dR", "dR of WL/SM bjet", "", "F" )
+        dataloader.AddVariable( "MVAinput_ZL1bJ_dR", "dR of lepton from Z/SM bjet", "", "F" )
 
     # You can add so-called "Spectator variables", which are not used in the MVA training, 
     # but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the 
@@ -220,16 +246,17 @@ def main():
     #    for background: factory.SetBackgroundWeightExpression("weight1*weight2");
     #dataloader.SetWeightExpression("xsecNorm")
 
-    dataloader.AddSpectator( "GoodLeptonCode" )
-    dataloader.AddSpectator( "nGoodLepton" )
     dataloader.AddSpectator( "LeadingLepton_pt" )
     dataloader.AddSpectator( "Z_charge" )
+    dataloader.AddSpectator( "nGoodLepton" )
+    dataloader.AddSpectator( "GoodLeptonCode" )
+    dataloader.AddSpectator( "MVAinput_Status" )
 
     # Read input data
-    #if gSystem.AccessPathName( infname ) != 0: gSystem.Exec( "wget http://root.cern.ch/files/" + infname )
     rootDir = '%s/src/TZWi/TopAnalysis/test/fcncTriLepton/' % os.environ["CMSSW_BASE"]
     kisti_store = '/xrootd/store/user/heewon/'
-    ntupleDir = 'ntuple_2016'
+    #ntupleDir = 'ntuple_2016'
+    ntupleDir = 'ntuple_2016_tightLepVetoJet'
     dName = rootDir + ntupleDir
 
     procInfo = yaml.load(open(rootDir+"config/grouping.yaml").read())["processes"]
@@ -261,9 +288,13 @@ def main():
     #inputBkgList = ["WZ", "DYJets", "ttV", "ZZ"]
 
     # Backgrounds for training in TTZct (Since June 24th)
-    inputBkgList = ["WZ", "ZZ"]
-    # Backgrounds are excepted when training with TTZct signal 
-    #inputBkgList = ["DYJets", "SingleTop", "ttJets", "WW", "SingleTopV", "ttV", "ttH"]
+    #inputBkgList = ["WZ", "ZZ"]
+    # All backgrounds
+    #inputBkgList = ["ttJets", "DYJets", "SingleTop", "SingleTopV", "WW", "WZ", "ZZ", "ttV", "ttH"]
+    # Bug : Some of the SingleTop sample; "ST_tW_top & antitop _5f_inclusiveDecays TuneCUETP8 M1(M2T4)" has no LHEScaleWeight
+    # So just now, exception SingleTop for training
+    #inputBkgList = ["ttJets", "DYJets", "SingleTopV", "WZ", "ZZ", "ttV", "ttH"]
+    inputBkgList = ["SingleTopV", "WZ", "ZZ", "ttV"]
 
     for mo in modes:
       for proc in procInfo:
@@ -283,12 +314,12 @@ def main():
     # Because of xsecNorm bug
     # LHEScaleWeight[4] : norminal
     # 1. weight before apply TriggerSF & seperate el/mu SF
-    dataloader.SetSignalWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*LeptonSF*xsecNorm")
-    dataloader.SetBackgroundWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*LeptonSF")
+    #dataloader.SetSignalWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*LeptonSF*xsecNorm")
+    #dataloader.SetBackgroundWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*LeptonSF")
     #dataloader.SetBackgroundWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)")
     # 2. weight after apply TriggerSF & seperate el/mu SF
-    #dataloader.SetSignalWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*Trigger_SF*Electron_SF*MuonID_SF*MuonISO_SF*xsecNorm")
-    #dataloader.SetBackgroundWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*Trigger_SF*Electron_SF*MuonID_SF*MuonISO_SF")
+    dataloader.SetSignalWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*Trigger_SF*Electron_SF*MuonID_SF*MuonISO_SF")
+    dataloader.SetBackgroundWeightExpression("LHEScaleWeight[4]*genWeight/abs(genWeight)*puWeight*BtagWeight*Trigger_SF*Electron_SF*MuonID_SF*MuonISO_SF")
 
     trees = []
     for fsig in fLists_sig:
@@ -299,21 +330,22 @@ def main():
         #print(file_l)
         f = TFile.Open(fsig[0]+"/"+file_l)
         t_sig = f.Get("Events")
+        if (t_sig.GetEntries() == 0): continue
         dataloader.AddSignalTree( t_sig, signalWeight )
         trees.append([f, t_sig])
 
     for fbkg in fLists_bkg:
       print(fbkg[0])
       backgroundWeight = 1.0
-      for xsec in crosssection:
-          for num in entries:
-              if num == "TT":
-                  name = "MC2016." + num + ".powheg"
-              else:
-                  name = "MC2016." + num
-              for dataset_key in datasetInfo["dataset"][name].keys():
-                  if dataset_key[1:] == (fbkg[0].split('/')[-1]).replace('.','/') and num == xsec:
-                      backgroundWeight = (crosssection[xsec]/entries[num])*35900
+      #for xsec in crosssection:
+      #    for num in entries:
+      #        if num == "TT":
+      #            name = "MC2016." + num + ".powheg"
+      #        else:
+      #            name = "MC2016." + num
+      #        for dataset_key in datasetInfo["dataset"][name].keys():
+      #            if dataset_key[1:] == (fbkg[0].split('/')[-1]).replace('.','/') and num == xsec:
+      #                backgroundWeight = (crosssection[xsec]/entries[num])*35900
       #print backgroundWeight
       file_list = os.listdir(fbkg[0])
       for file_l in file_list:
@@ -325,7 +357,7 @@ def main():
 
     # Apply additional cuts on the signal and background sample.
 
-    print channel 
+    print channel
     # TTSR
     if "TTZct" in channel or "TTZut" in channel:
       mycutSig = TCut( "HLT == 1 && TMath::Abs(Z_mass-91.2) < 7.5 && nGoodJet >= 2 && nGoodJet <= 3 && nBjet >= 1 && TMath::Abs(GoodLeptonCode) == 111 && nGoodLepton == 3 && LeadingLepton_pt > 25 && Z_charge == 0 && W_MT <= 300" )
@@ -344,8 +376,10 @@ def main():
     # splitting them into training and test samples
 
     #by mode
-    # 1. Train:Test = 7:3
+    # 1. LooseJet
+    # Train:Test = 7:3
     # 1) (number of entries of each mode)*0.7
+    '''
     sig_num_TTZct = ['11194', '15014', '28438', '19983']
     sig_num_TTZut = ['10382', '13913', '26353', '18392']
     sig_num_STZct = ['7456', '10296', '17715', '12443']
@@ -360,6 +394,70 @@ def main():
     tot_sig_num_STZut = 53246
     tot_bkg_num_TT = 119224 # bkg = WZ, ZZ
     tot_bkg_num_ST = 171585 # bkg = WZ, ZZ
+    '''
+    # 2. TightLepVetoJet
+    # 1) Total number of entries in each mode [3El, 1Mu2El, 3Mu, 1El2Mu]
+    sig_num_TTZct = [16001, 21442, 40610, 28537]
+    sig_num_TTZut = [14844, 19864, 37640, 26271]
+    sig_num_STZct = [10701, 14781, 25430, 17857]
+    sig_num_STZut = [8315, 11360, 19847, 13997]
+    #bkg_num_all_TT = [23010, 14425, 28981, 42693] # bkg = WZ, ZZ
+    #bkg_num_all_ST = [36756, 18286, 36816, 72068] # bkg = WZ, ZZ
+    bkg_num_all_TT = [60656, 65502, 123537, 109315] # bkg = stV, wz, zz, ttV
+    bkg_num_all_ST = [49749, 35983, 71524, 95771] # bkg = stV, wz, zz, ttV
+    #bkg_num_all_TT = [60818, 65733, 124005, 109660] # bkg = all
+    #bkg_num_all_ST = [49797, 36048, 71652, 95880] # bkg = all
+    #bkg_num_all_TT = [60797, 65720, 123963, 109622] # bkg = all - (ST, ww, dyjets)
+    #bkg_num_all_ST = [49770, 36018, 71615, 95839] # bkg = all - (ST, ww, dyjets)
+    # 2) 0.5 * (number of entries) but little bit difference [+10~15 in train]
+    #sig_num_TTZct = [8010, 10730, 20315, 14280]
+    #sig_num_TTZut = [7435, 9945, 18830, 13145]
+    #sig_num_STZct = [5360, 7400, 12730, 8940]
+    #sig_num_STZut= [4170, 5690, 9935, 7010]
+    #bkg_num_TT = [11515, 7225, 14500, 21360] # bkg = WZ, ZZ
+    #bkg_num_ST = [18390, 9155, 18420, 36045] # bkg = WZ, ZZ
+    #bkg_num_others = ['43284', '58631', '110085', '77351']
+    #bkg_num_all_TT = [30420, 32880, 62015, 54840]
+    #bkg_num_all_ST = [24910, 18035, 35840, 47950]
+    #bkg_num_all_TT = [30340, 32760, 61780, 54670] # bkg = stV, wz, zz, ttV
+    #bkg_num_all_ST = [24885, 18000, 35772, 47895] # bkg = stV, wz, zz, ttV
+    # +30~
+    #sig_num_TTZct = [8030, 10750, 20335, 14300]
+    #sig_num_TTZut = [7455, 9965, 18850, 13165]
+    #sig_num_STZct = [5380, 7420, 12750, 8960]
+    #sig_num_STZut= [4190, 5710, 9955, 7030]
+    #bkg_num_all_TT = [30360, 32780, 61800, 54690] # bkg = stV, wz, zz, ttV
+    #bkg_num_all_ST = [24905, 18020, 35790, 47915]
+    # +50~
+    #sig_num_TTZct = [8050, 10770, 20355, 14320]
+    #sig_num_TTZut = [7475, 9985, 18870, 13185]
+    #sig_num_STZct = [5400, 7440, 12770, 8980]
+    #sig_num_STZut= [4210, 5730, 9975, 7050]
+    #bkg_num_all_TT = [30380, 32800, 61820, 54710] # bkg = stV, wz, zz, ttV
+    #bkg_num_all_ST = [24925, 18040, 35810, 47935]
+    #bkg_num_all_TT = [30426, 32890, 61995, 54830] # bkg = stV, wz, zz, ttV, ttH
+    #bkg_num_all_ST = [24915, 18032, 35812, 47933]
+    #sig_num_TTZct = [8050, 10770, 20355, 14320]
+    #sig_num_TTZut = [7475, 9985, 18870, 13185]
+    #sig_num_STZct = [5400, 7440, 12770, 8980]
+    #sig_num_STZut= [4210, 5730, 9975, 7050]
+    #bkg_num_all_TT = [30380, 32800, 61820, 54710] # bkg = stV, wz, zz, ttV
+    #bkg_num_all_ST = [24925, 18040, 35810, 47935]
+    # total number of entries
+    #tot_sig_num_TTZct = 106590
+    #tot_sig_num_TTZut = 98619
+    #tot_sig_num_STZct = 68769
+    #tot_sig_num_STZut = 53519
+    #tot_bkg_num_TT = 109109 # bkg = WZ, ZZ
+    #tot_bkg_num_ST = 163926 # bkg = WZ, ZZ
+    #bkg_sim number, not all entries in each mode
+    tot_sig_num_TTZct = sig_num_TTZct[0]+sig_num_TTZct[1]+sig_num_TTZct[2]+sig_num_TTZct[3]
+    tot_sig_num_TTZut = sig_num_TTZut[0]+sig_num_TTZut[1]+sig_num_TTZut[2]+sig_num_TTZut[3]
+    tot_sig_num_STZct = sig_num_STZct[0]+sig_num_STZct[1]+sig_num_STZct[2]+sig_num_STZct[3]
+    tot_sig_num_STZut = sig_num_STZut[0]+sig_num_STZut[1]+sig_num_STZut[2]+sig_num_STZut[3]
+    tot_bkg_num_TT = bkg_num_all_TT[0]+bkg_num_all_TT[1]+bkg_num_all_TT[2]+bkg_num_all_TT[3]
+    tot_bkg_num_ST = bkg_num_all_ST[0]+bkg_num_all_ST[1]+bkg_num_all_ST[2]+bkg_num_all_ST[3]
+
     mode_num = -1 # Using @ all mode (For test BDT option)
     if len(modes) == 1:
         for mo in modes:
@@ -370,44 +468,68 @@ def main():
 
     if len(inputSigList) == 1:
         if "TTZct" in channel:
-             #options = "nTrain_Signal=85291:nTrain_Background=425919:nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 8:2
-             #options = "nTrain_Signal=63968:nTrain_Background=319439:nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 6:4
             # For test all mode (3E,1M2E,3M,1E2M) & bkg: WZ & ZZ 
-            if mode_num < 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+str(tot_sig_num_TTZct*0.7)+":nTrain_Background="+str(tot_bkg_num_TT*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            #if mode_num < 0 and len(inputBkgList) == 2:
+            if mode_num < 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(tot_sig_num_TTZct*0.5)+":nTrain_Background="+str(tot_bkg_num_TT*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(tot_sig_num_TTZct*0.7)+":nTrain_Background="+str(tot_bkg_num_TT*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             # For training (bkg: WZ & ZZ)
-            elif mode_num >= 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+sig_num_TTZct[mode_num]+":nTrain_Background="+bkg_num_TT[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 7:3
-            # For evaluation (get a mva score)
-            elif mode_num >= 0 and len(inputBkgList) != 2:
-                options = "nTrain_Signal="+sig_num_TTZct[mode_num]+":nTrain_Background="+bkg_num_others[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 7:3
+            #elif mode_num >= 0 and len(inputBkgList) == 2:
+                #options = "nTrain_Signal="+str(sig_num_TTZct[mode_num])+":nTrain_Background="+str(bkg_num_TT[mode_num])+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            # All backgrounds
+            elif mode_num >= 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(sig_num_TTZct[mode_num]*0.5)+":nTrain_Background="+str(bkg_num_all_TT[mode_num]*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(sig_num_TTZct[mode_num]*0.7)+":nTrain_Background="+str(bkg_num_all_TT[mode_num]*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             else:
                 options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
 
         elif "TTZut" in channel:
             # For test all mode (3E,1M2E,3M,1E2M) & bkg: WZ & ZZ
-            if mode_num < 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+str(tot_sig_num_TTZut*0.7)+":nTrain_Background="+str(tot_bkg_num_TT*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            #if mode_num < 0 and len(inputBkgList) == 2:
+            if mode_num < 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(tot_sig_num_TTZut*0.5)+":nTrain_Background="+str(tot_bkg_num_TT*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(tot_sig_num_TTZut*0.7)+":nTrain_Background="+str(tot_bkg_num_TT*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             # For training (bkg: WZ & ZZ)
-            elif mode_num >= 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+sig_num_TTZut[mode_num]+":nTrain_Background="+bkg_num_TT[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
-            # For evaluation (get a mva score)
-            elif mode_num >= 0 and len(inputBkgList) != 2:
-                options = "nTrain_Signal="+sig_num_TTZut[mode_num]+":nTrain_Background="+bkg_num_others[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            #elif mode_num >= 0 and len(inputBkgList) == 2:
+            #    options = "nTrain_Signal="+str(sig_num_TTZut[mode_num])+":nTrain_Background="+str(bkg_num_TT[mode_num])+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            # All backgrounds
+            elif mode_num >= 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(sig_num_TTZut[mode_num]*0.5)+":nTrain_Background="+str(bkg_num_all_TT[mode_num]*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(sig_num_TTZut[mode_num]*0.7)+":nTrain_Background="+str(bkg_num_all_TT[mode_num]*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             else:
                 options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
         elif "STZct" in channel:
-            if mode_num < 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+str(tot_sig_num_STZct*0.7)+":nTrain_Background="+str(tot_bkg_num_ST*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
-            elif mode_num >= 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+sig_num_STZct[mode_num]+":nTrain_Background="+bkg_num_ST[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 7:3
+            #if mode_num < 0 and len(inputBkgList) == 2:
+            if mode_num < 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(tot_sig_num_STZct*0.5)+":nTrain_Background="+str(tot_bkg_num_ST*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(tot_sig_num_STZct*0.7)+":nTrain_Background="+str(tot_bkg_num_ST*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            #elif mode_num >= 0 and len(inputBkgList) == 2:
+            #    options = "nTrain_Signal="+str(sig_num_STZct[mode_num])+":nTrain_Background="+str(bkg_num_ST[mode_num])+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            # All backgrounds
+            elif mode_num >= 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(sig_num_STZct[mode_num]*0.5)+":nTrain_Background="+str(bkg_num_all_ST[mode_num]*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(sig_num_STZct[mode_num]*0.7)+":nTrain_Background="+str(bkg_num_all_ST[mode_num]*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             else:
                 options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
         elif "STZut" in channel:
-            if mode_num < 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+str(tot_sig_num_STZut*0.7)+":nTrain_Background="+str(tot_bkg_num_ST*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
-            elif mode_num >= 0 and len(inputBkgList) == 2:
-                options = "nTrain_Signal="+sig_num_STZut[mode_num]+":nTrain_Background="+bkg_num_ST[mode_num]+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" #train:test = 7:3
+            #if mode_num < 0 and len(inputBkgList) == 2:
+            if mode_num < 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(tot_sig_num_STZut*0.5)+":nTrain_Background="+str(tot_bkg_num_ST*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(tot_sig_num_STZut*0.7)+":nTrain_Background="+str(tot_bkg_num_ST*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            #elif mode_num >= 0 and len(inputBkgList) == 2:
+            #    options = "nTrain_Signal="+str(sig_num_STZut[mode_num])+":nTrain_Background="+str(bkg_num_ST[mode_num])+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+            # All backgrounds
+            elif mode_num >= 0 and len(inputBkgList) == 4:
+                options = "nTrain_Signal="+str(sig_num_STZut[mode_num]*0.5)+":nTrain_Background="+str(bkg_num_all_ST[mode_num]*0.5)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
+                #options = "nTrain_Signal="+str(sig_num_STZut[mode_num]*0.7)+":nTrain_Background="+str(bkg_num_all_ST[mode_num]*0.7)+":nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
             else:
                 options = "nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V"
         else:
@@ -428,32 +550,45 @@ def main():
 
     # Boosted Decision Trees
     # BDTG Default: NTrees=400:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
+    # SeparationType default = GiniIndex
     if "BDTG" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=400:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.20:UseBaggedBoost:BaggedSampleFraction=0.8:SeparationType=GiniIndex:nCuts=15:MaxDepth=3")
-    if "BDTG200" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG200", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.20:UseBaggedBoost:BaggedSampleFraction=0.8:SeparationType=GiniIndex:nCuts=15:MaxDepth=3")
+        #factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=400:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.30:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20:MaxDepth=3:NegWeightTreatment=Pray")
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=15:MaxDepth=3:NegWeightTreatment=Pray")
+        #factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:UseBaggedBoost:BaggedSampleFraction=0.8:nCuts=20:MaxDepth=5:NegWeightTreatment=Pray" )
+        #name: optChange
+        #factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=400:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2:NegWeightTreatment=Pray" )
+        #name: IgnNegWeight
+        #factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG", "!H:!V:NTrees=400:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2:NegWeightTreatment=IgnoreNegWeightsInTraining" )
     if "BDTG225" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG225", "!H:!V:NTrees=225:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.20:UseBaggedBoost:BaggedSampleFraction=0.8:SeparationType=GiniIndex:nCuts=15:MaxDepth=3:NegWeightTreatment=Pray")
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG225", "!H:!V:NTrees=225:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.30:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20:MaxDepth=3:NegWeightTreatment=Pray")
     if "BDTGt1" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTGt1", "!H:!V:NTrees=400:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=20:MaxDepth=5")
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTGt1", "!H:!V:NTrees=400:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=20:MaxDepth=5:NegWeightTreatment=Pray")
+    if "BDTG_ST" in mlist:
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG_ST", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=15:MaxDepth=3:NegWeightTreatment=Pray")
+    #if "BDTG_ST" in mlist: # add bagged boost
+    #    factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG_ST", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=15:MaxDepth=3:NegWeightTreatment=Pray:UseBaggedBoost:BaggedSampleFraction=0.8")
     if "BDTG_TT" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG_TT", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=20:MaxDepth=5:NegWeightTreatment=Pray:NegWeightTreatment=IgnoreNegWeightsInTraining")
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG_TT", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=20:MaxDepth=5:NegWeightTreatment=Pray")
+    #if "BDTG_TT" in mlist: #add bagged boost
+    #    factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTG_TT", "!H:!V:NTrees=200:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.50:SeparationType=GiniIndex:nCuts=20:MaxDepth=5:NegWeightTreatment=Pray:UseBaggedBoost:BaggedSampleFraction=0.8")
+    if "BDTGt2" in mlist:
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDTGt2", "!H:!V:NTrees=400:MinNodeSize=5%:BoostType=Grad:Shrinkage=0.20:SeparationType=GiniIndex:UseBaggedBoost:BaggedSampleFraction=0.8:nCuts=15:MaxDepth=3:NegWeightTreatment=Pray")
 
     # BDT Defalut: MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20
     if "BDT" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT", "!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" )
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT", "!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20:NegWeightTreatment=Pray" )
 
     if "BDT200" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT200", "!H:!V:NTrees=200:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" )
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT200", "!H:!V:NTrees=200:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20:NegWeightTreatment=Pray" )
 
     if "BDT100" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT100", "!H:!V:NTrees=100:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" )
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT100", "!H:!V:NTrees=100:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20:NegWeightTreatment=Pray" )
 
     if "BDT850" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT850", "!H:!V:NTrees=850:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" )
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT850", "!H:!V:NTrees=850:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20:NegWeightTreatment=Pray" )
 
     if "BDT50" in mlist:
-        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT50", "!H:!V:NTrees=50:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" )
+        factory.BookMethod( dataloader, TMVA.Types.kBDT, "BDT50", "!H:!V:NTrees=50:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20:NegWeightTreatment=Pray" )
 
 
 

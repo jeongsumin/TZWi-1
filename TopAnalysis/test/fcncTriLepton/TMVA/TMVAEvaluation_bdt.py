@@ -19,14 +19,13 @@ if len(sys.argv) < 2:
 channel = sys.argv[1]
 mode = sys.argv[2]
 
-weight_bkg_case = 'WZ_ZZ'
-# Weight outfile after classification in TT signal: channel_mode_WZ_ZZ_Tr7Te3/TMVAClassification_BDTG_TT.weights.xml
-
 rootDir = '%s/src/TZWi/TopAnalysis/test/fcncTriLepton/' % os.environ["CMSSW_BASE"]
-kisti_store = '/xrootd/store/user/heewon/'
-ntupleDir = 'ntuple_2016'
-weightDir = 'TMVA/dataset/result_%s_%s_%s_Tr7Te3' % (channel, mode, weight_bkg_case)
-scoreDir = 'TMVA/scores/%s/%s_%s' % (channel, mode, weight_bkg_case)
+kisti_store = '/xrootd/store/user/sujeong/FCNC_tZq/tightLepVetoJet_ntuple_2016/'
+#ntupleDir = 'ntuple_2016'
+ntupleDir = 'ntuple_2016_tightLepVetoJet'
+#weightDir = 'TMVA/dataset/result_%s_%s_%s_Tr7Te3' % (channel, mode, weight_bkg_case)
+weightDir = 'TMVA/dataset/result_%s_%s_bugfix_bkg1_half' % (channel, mode)
+scoreDir = 'TMVA/scores/%s/%s' % (channel, mode)
 
 #'title' in the groupting.yaml
 #bkg_others = ["DYJets", "SingleTop", "ttJets", "WW", "SingleTopV", "ttV", "ttH"]
@@ -63,15 +62,23 @@ for systjet in syst:
     if systjet == "jesUp":
         ntupleDir = 'FCNC_2016_jesTotalUp'
         dName = kisti_store + ntupleDir
+        #ntupleDir = 'ntuple_2016_jesTotalUp'
+        #dName = rootDir + ntupleDir
     elif systjet == "jesDown":
         ntupleDir = 'FCNC_2016_jesTotalDown'
         dName = kisti_store + ntupleDir
+        #ntupleDir = 'ntuple_2016_jesTotalDown'
+        #dName = rootDir + ntupleDir
     elif systjet == "jerUp":
         ntupleDir = 'FCNC_2016_jerUp'
         dName = kisti_store + ntupleDir
+        #ntupleDir = 'ntuple_2016_jerUp'
+        #dName = rootDir + ntupleDir
     elif systjet == "jerDown":
         ntupleDir = 'FCNC_2016_jerDown'
         dName = kisti_store + ntupleDir
+        #ntupleDir = 'ntuple_2016_jerDown'
+        #dName = rootDir + ntupleDir
     else:
         dName = rootDir + ntupleDir
     if not os.path.exists( os.path.join(rootDir,scoreDir,systjet) ):
@@ -93,8 +100,12 @@ for systjet in syst:
             else: continue
             out_tree = TTree("Events", "Events")
             fLists_input = []
-            for datasetName in datasetInfo['dataset'][datasetGroup].keys():
-                fLists_input.append(glob(dName+"/reco/%s/%s" % (mode, datasetName[1:].replace('/','.'))))
+            if systjet == "origin":
+                for datasetName in datasetInfo['dataset'][datasetGroup].keys():
+                    fLists_input.append(glob(dName+"/reco/%s/%s" % (mode, datasetName[1:].replace('/','.'))))
+            else:
+                for datasetName in datasetInfo['dataset'][datasetGroup].keys():
+                    fLists_input.append(glob(dName+"/reco/%s/%s_JEC" % (mode, datasetName[1:].replace('/','.'))))
 
             reader = TMVA.Reader("Color:!Silent") #coloured output & not suppression all output
             input_tree = TChain("Events")
@@ -124,10 +135,11 @@ for systjet in syst:
                     branches[branchName] = array('f', [-999])
                     input_tree.SetBranchAddress(branchName, branches[branchName])
 
-            if channel == "TTZct" or channel == "TTZut":
-                reader.BookMVA('BDTG_TT', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_TT.weights.xml')))
-            elif channel == "STZct" or channel == "STZut":
-                reader.BookMVA('BDTG_ST', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_ST.weights.xml')))
+            #if channel == "TTZct" or channel == "TTZut":
+            #    reader.BookMVA('BDTG_TT', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_TT.weights.xml')))
+            #elif channel == "STZct" or channel == "STZut":
+            #    reader.BookMVA('BDTG_ST', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_ST.weights.xml')))
+            reader.BookMVA('BDTG', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG.weights.xml')))
             totevent = input_tree.GetEntries()
 
             score = np.zeros(1, dtype=np.float32)
@@ -188,7 +200,8 @@ for systjet in syst:
                 if channel == "TTZct" or channel == "TTZut":
                     #TTSR
                     if not(input_tree.HLT == 1 and abs(input_tree.Z_mass-91.2) < 7.5 and input_tree.nGoodJet > 1 and input_tree.nGoodJet <= 3 and input_tree.nBjet >= 1 and abs(input_tree.GoodLeptonCode) == 111 and input_tree.nGoodLepton == 3 and input_tree.LeadingLepton_pt > 25 and input_tree.Z_charge == 0 and input_tree.W_MT <= 300): continue
-                    score[0] = reader.EvaluateMVA('BDTG_TT')
+                    #score[0] = reader.EvaluateMVA('BDTG_TT')
+                    score[0] = reader.EvaluateMVA('BDTG')
                     nEvent[0] = input_tree.event
                     nGoodLepton[0] = input_tree.nGoodLepton
                     LeadingLepton_pt[0] = input_tree.LeadingLepton_pt
@@ -222,7 +235,8 @@ for systjet in syst:
                 elif channel == "STZct" or channel == "STZut":
                     #STSR
                     if not(input_tree.HLT == 1 and abs(input_tree.Z_mass-91.2) < 7.5 and input_tree.nGoodJet == 1 and input_tree.nBjet == 1 and abs(input_tree.GoodLeptonCode) == 111 and input_tree.nGoodLepton == 3 and input_tree.LeadingLepton_pt > 25 and input_tree.Z_charge == 0 and input_tree.W_MT <= 300): continue
-                    score[0] = reader.EvaluateMVA('BDTG_ST')
+                    #score[0] = reader.EvaluateMVA('BDTG_ST')
+                    score[0] = reader.EvaluateMVA('BDTG')
                     nEvent[0] = input_tree.event
                     nGoodLepton[0] = input_tree.nGoodLepton
                     LeadingLepton_pt[0] = input_tree.LeadingLepton_pt

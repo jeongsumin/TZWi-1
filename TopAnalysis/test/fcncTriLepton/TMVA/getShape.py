@@ -9,7 +9,9 @@ if __name__ == '__main__':
 
     # Read input data
     rootDir = '%s/src/TZWi/TopAnalysis/test/fcncTriLepton/' % os.environ["CMSSW_BASE"]
-    scoreDir = 'TMVA/scores'
+    #scoreDir = 'TMVA/scores'
+    scoreDir = 'TMVA/scores_bugfix_bkg1_half'
+    bkg_dirname = "bugfix_bkg1_half"
     dName = rootDir + scoreDir
     syst = ["origin", "jesUp", "jesDown", "jerUp", "jerDown"]
     syst_btagshape = ["BtagWeight_jesup", "BtagWeight_jesdown",
@@ -29,23 +31,24 @@ if __name__ == '__main__':
     #MuF up/down -> LHEScaleWeight[5] / [3]
     #syst_theory_name = ["MuRUp", "MuRDown", "MuFUp", "MuFDown"]
 
-    channels = ["TTZct", "TTZut", "STZct", "STZut"]
+    #channels = ["TTZct", "TTZut", "STZct", "STZut"]
+    channels = ["TTZct", "STZct"]
     modes = ["ElElEl", "MuElEl", "ElMuMu", "MuMuMu"]
 
     procInfo = yaml.load(open(rootDir+"config/grouping.yaml").read())["processes"]
     crosssection = yaml.load(open(rootDir+"config/crosssection.yaml").read())["crosssection"]
-    entries = yaml.load(open(rootDir+"config/crosssection.yaml").read())["Entries"]
+    entries = yaml.load(open(rootDir+"config/crosssection.yaml").read())["nEventsGenWeighted"]
     datasetInfo = {}
     for f in glob(rootDir+"config/datasets/MC*16*.yaml"):
         if 'dataset' not in datasetInfo: datasetInfo["dataset"] = {}
         datasetInfo["dataset"].update(yaml.load(open(f).read())["dataset"])
-    if not os.path.exists( os.path.join(rootDir, 'TMVA', 'shape') ):
-        os.makedirs(os.path.join(rootDir, 'TMVA', 'shape'))
+    if not os.path.exists( os.path.join(rootDir, 'TMVA', 'shape', bkg_dirname) ):
+        os.makedirs(os.path.join(rootDir, 'TMVA', 'shape', bkg_dirname))
     #Number of MVA score shape bins
     nbins = 10
     for ch in channels:
         outFileName = 'shape_%s' % ch
-        outFile = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', outFileName + '.root'), 'RECREATE' )
+        outFile = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', bkg_dirname, outFileName + '.root'), 'RECREATE' )
         for mo in modes:
             hist_data = TH1F(mo+"_"+"data_obs", "mva shape data", nbins, -1, 1)
             for systjet in syst:
@@ -86,12 +89,14 @@ if __name__ == '__main__':
                             # Read score file
                             if proc == "TTZct" or proc == "TTZut" or proc == "STZct" or proc == "STZut":
                                 if proc == ch:
-                                    f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
+                                    #f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
+                                    f_score = TFile.Open(os.path.join(dName, ch, mo, systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
                                 else:
                                     print "This MC category is not signal"
                                     continue
                             else:
-                                f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
+                                #f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
+                                f_score = TFile.Open(os.path.join(dName, ch, mo, systjet, 'score_TMVA_'+datasetGroup[7:]+'.root' ))
                             score_tree = f_score.Get("Events")
                             if systjet == "origin": score_tree_btag = f_score.Get("EventsBtag")
 
@@ -114,7 +119,7 @@ if __name__ == '__main__':
                                         branches_b[branchName] = array('f', [-999])
                                         score_tree_btag.SetBranchAddress(branchName, branches_b[branchName])
 
-                            xsec_num = 1.0
+                            xsec_scale = 1.0
                             for xsec in crosssection:
                                 for num in entries:
                                     if num == "TT":
@@ -122,8 +127,8 @@ if __name__ == '__main__':
                                     else:
                                         name = num
                                     if datasetGroup[7:] == name and num == xsec:
-                                        xsec_num = (float(crosssection[xsec])/float(entries[num]))*35900
-                            print xsec_num
+                                        xsec_scale = (float(crosssection[xsec])/float(entries[num]))*35900
+                            print xsec_scale
 
 
                             totevent_score = score_tree.GetEntries()
@@ -176,10 +181,11 @@ if __name__ == '__main__':
                                         elif "CQErr2Down" in syst_name[name]: btagWeight = score_tree_btag.BtagWeight_cferr2down
                                         else: btagWeight = score_tree.BtagWeight
 
-                                        weight_mc *= LHEWeight*genWeight/abs(genWeight)*puWeight*btagWeight*Trigger_SF*Ele_SF*MuID_SF*MuISO_SF*xsec_num
+                                        weight_mc = LHEWeight*genWeight/abs(genWeight)*puWeight*btagWeight*Trigger_SF*Ele_SF*MuID_SF*MuISO_SF*xsec_scale
                                         if proc == "TTZct" or proc == "TTZut" or proc == "STZct" or proc == "STZut":
                                             if proc in hmc_jet.GetName(): #for signal MC
-                                                if syst_name[name] == "": hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                                if syst_name[name] == "":
+                                                    hmc_jet.Fill(score_tree.MLScore, weight_mc)
                                                 elif syst_name[name] != "" and name != 0:
                                                     for hist in hmc_mva_syst_list:
                                                         if syst_name[name] in hist.GetName():
@@ -188,14 +194,19 @@ if __name__ == '__main__':
                                                 else: continue
                                             else: continue
                                         else:
-                                            if syst_name[name] == "": hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                            if syst_name[name] == "":
+                                                #if proc == "DYJets" and weight_mc < 0.: hmc_jet.Fill(0)
+                                                #else: hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                                hmc_jet.Fill(score_tree.MLScore, weight_mc)
                                             elif syst_name[name] != "" and name != 0:
                                                 for hist in hmc_mva_syst_list:
                                                     if syst_name[name] in hist.GetName():
+                                                        #if proc == "DYJets" and weight_mc < 0.: hist.Fill(0)
+                                                        #else: hist.Fill(score_tree.MLScore, weight_mc)
                                                         hist.Fill(score_tree.MLScore, weight_mc)
                                                     else: continue
                                             else: continue
-                                        weight_mc = 1
+                                        #weight_mc = 1
                                 elif systjet != "origin":
                                     genWeight = score_tree.genWeight
                                     Trigger_SF = score_tree.Trigger_SF
@@ -205,18 +216,24 @@ if __name__ == '__main__':
                                     MuISO_SF = score_tree.MuonISO_SF
                                     puWeight = score_tree.puWeight
                                     btagWeight = score_tree.BtagWeight
-                                    weight_mc *= LHEWeight*genWeight/abs(genWeight)*puWeight*btagWeight*Trigger_SF*Ele_SF*MuID_SF*MuISO_SF*xsec_num
+                                    weight_mc = LHEWeight*genWeight/abs(genWeight)*puWeight*btagWeight*Trigger_SF*Ele_SF*MuID_SF*MuISO_SF*xsec_scale
                                     if proc == "TTZct" or proc == "TTZut" or proc == "STZct" or proc == "STZut":
-                                        if proc in hmc_jet.GetName(): hmc_jet.Fill(score_tree.MLScore, weight_mc)
-                                    else: hmc_jet.Fill(score_tree.MLScore, weight_mc)
-                                    weight_mc = 1
+                                        if proc in hmc_jet.GetName():
+                                            #if weight_mc < 0.: hmc_jet.Fill(0)
+                                            hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                    else:
+                                        #if proc == "DYJets" and weight_mc < 0.: hmc_jet.Fill(0)
+                                        #else: hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                        hmc_jet.Fill(score_tree.MLScore, weight_mc)
+                                    #weight_mc = 1
                                 else:
                                     print "!!Fail!!"
                             f_score.Close()
 
                         elif "Run" in datasetGroup:
                             if ("Data" in procInfo[proc]['title']) and mo == procInfo[proc]['modes'][0] and ("NPL" not in procInfo[proc]['modes'][0]) and systjet=="origin":
-                                f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[8:]+'.root'))
+                                #f_score = TFile.Open(os.path.join(dName, ch, mo+'_WZ_ZZ', systjet, 'score_TMVA_'+datasetGroup[8:]+'.root'))
+                                f_score = TFile.Open(os.path.join(dName, ch, mo, systjet, 'score_TMVA_'+datasetGroup[8:]+'.root'))
                                 score_tree = f_score.Get("Events")
                                 totevent_score = score_tree.GetEntries()
                                 print datasetGroup[8:]

@@ -12,11 +12,13 @@ processes_mapping = {
 if __name__ == '__main__':
     # Read input data
     rootDir = '%s/src/TZWi/TopAnalysis/test/fcncTriLepton/' % os.environ["CMSSW_BASE"]
+    bkg_dirname = "bugfix_bkg1_half"
     syst = ["origin", "jesUp", "jesDown", "jerUp", "jerDown"]
     #name for histogram
     syst_name = ["", "MuRDown", "MuFDown", "MuFUp", "MuRUp", "ElSFUp", "ElSFDown", "MuIDUp", "MuIDDown", "MuISOUp", "MuISODown", "PUUp", "PUDown", "BtagJESUp", "BtagJESDown", "BtagLFUp", "BtagLFDown", "BtagHFUp", "BtagHFDown", "BtagHFStats1Up", "BtagHFStats1Down", "BtagHFStats2Up", "BtagHFStats2Down", "BtagLFStats1Up", "BtagLFStats1Down", "BtagLFStats2Up", "BtagLFStats2Down", "BtagCQErr1Up", "BtagCQErr1Down", "BtagCQErr2Up", "BtagCQErr2Down"]
 
-    channels = ["TTZct", "TTZut", "STZct", "STZut"]
+    #channels = ["TTZct", "TTZut", "STZct", "STZut"]
+    channels = ["TTZct", "STZct"]
     modes = ["ElElEl", "MuElEl", "ElMuMu", "MuMuMu"]
 
     procInfo = yaml.load(open(rootDir+"config/grouping.yaml").read())["processes"]
@@ -32,8 +34,10 @@ if __name__ == '__main__':
     nbins = 10
     for ch in channels:
         outFileName = 'add_shape_%s' % ch
-        outFile = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', outFileName + '.root'), 'RECREATE' )
-        f_shape = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', 'shape_' + ch + '.root') )
+        #outFile = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', outFileName + '.root'), 'RECREATE' )
+        #f_shape = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', 'shape_' + ch + '.root') )
+        outFile = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', bkg_dirname, outFileName + '.root'), 'RECREATE' )
+        f_shape = TFile.Open( os.path.join(rootDir, 'TMVA', 'shape', bkg_dirname, 'shape_' + ch + '.root') )
         for mo in modes:
            hist_list = []
            no_overlap_hist_list = []
@@ -60,17 +64,17 @@ if __name__ == '__main__':
                                    if h_key.GetName() == mo + "_" + category + "_" + syst_name[name]:
                                        for merge_hist_sys in merge_hist_sys_list:
                                            if mo + "_" + merge_name + "_" + syst_name[name] == merge_hist_sys.GetName():
-                                               print h_key.GetName()
+                                               #print h_key.GetName()
                                                hist = f_shape.Get(h_key.GetName())
                                                merge_hist_sys.Add(hist)
                                for jet_syst in syst:
                                    for merge_hist_jet in merge_hist_jet_list:
                                        if jet_syst == "origin" and h_key.GetName() == mo + "_" + category:
-                                           print h_key.GetName()
+                                           #print h_key.GetName()
                                            hist = f_shape.Get(h_key.GetName())
                                            if merge_hist_jet.GetName() == mo + "_" + merge_name: merge_hist_jet.Add(hist)
                                        elif jet_syst != "origin" and h_key.GetName() == mo + "_" + category + "_" + jet_syst:
-                                           print h_key.GetName()
+                                           #print h_key.GetName()
                                            hist = f_shape.Get(h_key.GetName())
                                            if merge_hist_jet.GetName() == mo + "_" + merge_name + "_" + jet_syst: merge_hist_jet.Add(hist)
                            else:

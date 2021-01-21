@@ -20,14 +20,11 @@ if len(sys.argv) < 2:
 channel = sys.argv[1]
 mode = sys.argv[2]
 
-weight_bkg_case = 'WZ_ZZ'
-# Weight outfile after classification in TT signal: channel_mode_WZ_ZZ_Tr7Te3/TMVAClassification_BDTG_TT.weights.xml
-
 rootDir = '%s/src/TZWi/TopAnalysis/test/fcncTriLepton/' % os.environ["CMSSW_BASE"]
 kisti_store = '/xrootd/store/user/heewon/'
-ntupleDir = 'ntuple_2016'
-weightDir = 'TMVA/dataset/result_%s_%s_%s_Tr7Te3' % (channel, mode, weight_bkg_case)
-scoreDir = 'TMVA/scores/%s/%s_%s' % (channel, mode, weight_bkg_case)
+#ntupleDir = 'ntuple_2016'
+ntupleDir = 'ntuple_2016_tightLepVetoJet'
+scoreDir = 'TMVA/scores_bugfix_bkg1_half/%s/%s' % (channel, mode)
 
 #'title' in the groupting.yaml
 #bkg_others = ["DYJets", "SingleTop", "ttJets", "WW", "SingleTopV", "ttV", "ttH"]
@@ -73,17 +70,25 @@ elif channel == "STZct" or channel == "STZut":
 #channel = sys.argv[1], mode = sys.argv[2]
 for systjet in syst:
     if systjet == "jesup":
-        ntupleDir = 'FCNC_2016_jesTotalUp'
-        dName = kisti_store + ntupleDir
+        #ntupleDir = 'FCNC_2016_jesTotalUp'
+        #dName = kisti_store + ntupleDir
+        ntupleDir = 'ntuple_2016_jesTotalUp'
+        dName = rootDir + ntupleDir
     elif systjet == "jesdown":
-        ntupleDir = 'FCNC_2016_jesTotalDown'
-        dName = kisti_store + ntupleDir
+        #ntupleDir = 'FCNC_2016_jesTotalDown'
+        #dName = kisti_store + ntupleDir
+        ntupleDir = 'ntuple_2016_jesTotalDown'
+        dName = rootDir + ntupleDir
     elif systjet == "jerup":
-        ntupleDir = 'FCNC_2016_jerUp'
-        dName = kisti_store + ntupleDir
+        #ntupleDir = 'FCNC_2016_jerUp'
+        #dName = kisti_store + ntupleDir
+        ntupleDir = 'ntuple_2016_jerUp'
+        dName = rootDir + ntupleDir
     elif systjet == "jerdown":
-        ntupleDir = 'FCNC_2016_jerDown'
-        dName = kisti_store + ntupleDir
+        #ntupleDir = 'FCNC_2016_jerDown'
+        #dName = kisti_store + ntupleDir
+        ntupleDir = 'ntuple_2016_jerDown'
+        dName = rootDir + ntupleDir
     else:
         dName = rootDir + ntupleDir
     #if not os.path.exists( os.path.join(rootDir,scoreDir,systjet) ):
@@ -141,10 +146,6 @@ for systjet in syst:
                     branches[branchName] = array('d', [-999])
                     input_tree.SetBranchAddress(branchName, branches[branchName])
 
-            #if channel == "TTZct" or channel == "TTZut":
-            #    reader.BookMVA('BDTG_TT', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_TT.weights.xml')))
-            #elif channel == "STZct" or channel == "STZut":
-            #    reader.BookMVA('BDTG_ST', TString(os.path.join(rootDir,weightDir,'TMVAClassification_BDTG_ST.weights.xml')))
             totevent = input_tree.GetEntries()
 
             # for weight
